@@ -13,3 +13,5 @@ const courseColours = {
     COMP3506: 'grape'
 };
 ```
+### Screenshot
+<img src="https://i.imgur.com/VvMsmqB.png" height=500>

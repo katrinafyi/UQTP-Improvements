@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         UQTP Improvements
 // @namespace    kentonlam.xyz
-// @version      0.3
+// @version      0.3.1
 // @description  Colours courses on UQ timetable planner.
 // @author       Kenton Lam
 // @match        https://timetableplanner.app.uq.edu.au/semesters/*
@@ -12,6 +12,10 @@
 
 (function() {
     'use strict';
+
+    const toArray = (x) => Array.prototype.slice.call(x, 0);
+    const qs = (a, b) => typeof b == 'undefined' ? document.querySelector(a) : a.querySelector(b);
+    const qsa = (a, b) => toArray(typeof b == 'undefined' ? document.querySelectorAll(a) : a.querySelectorAll(b));
 
     // colour names and hex codes from google calendar.
     const colours = {
@@ -58,12 +62,12 @@
     const courseCodeRegex = /^[A-Z]+/;
     const colourTimetable = (mutations) => {
         // add course code to class list for courses on the left sidebar.
-        $('.course-item > .info > .heading:first-child').each((i, el) => {
+        qsa('.course-item > .info > .heading:first-child').forEach((el) => {
             el.classList.add(el.textContent);
             el.classList.add(courseCodeRegex.exec(el.textContent)[0]);
         });
         // for each timetabled event
-        $('.timetable-activity').each((i, el) => {
+        qsa('.timetable-activity').forEach((el) => {
             // add course code to class list.
             const courseCode = el.querySelector('.course-name').textContent;
             el.classList.add(courseCode);
@@ -84,7 +88,7 @@
 
     colourTimetable();
 
-    const timetable = document.querySelector('.timetable');
+    const timetable = qs('.timetable');
     const config = { attributes: false, childList: true, subtree: true };
     const observer = new MutationObserver(colourTimetable);
     // watch for changes by Ember and update colours.

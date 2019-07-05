@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         UQTP Improvements
 // @namespace    kentonlam.xyz
-// @version      0.2.1
+// @version      0.3
 // @description  Colours courses on UQ timetable planner.
 // @author       Kenton Lam
 // @match        https://timetableplanner.app.uq.edu.au/semesters/*
@@ -71,10 +71,12 @@
 
             // if statement prevents recursion with observer.
             if (!el.firstElementChild.classList.contains('activity-icon')) {
+                el.title = el.textContent; // show full text on hover
+
                 // add icon corresponding to first letter of activity stream.
                 const icon = activityIcons[el.querySelector('.activity-stream').textContent[0]];
                 if (icon)
-                    el.insertAdjacentHTML('afterbegin', `<span class="activity-icon">${icon}</span>`);
+                    el.insertAdjacentHTML('afterbegin', `<span class="activity-icon">${icon}</span> `);
             }
         });
 

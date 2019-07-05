@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         UQTP Improvements
 // @namespace    kentonlam.xyz
-// @version      0.3.2
+// @version      0.3.3
 // @description  Colours courses on UQ timetable planner.
 // @author       Kenton Lam
 // @match        https://timetableplanner.app.uq.edu.au/semesters/*
@@ -11,7 +11,7 @@
 
 /* globals $ */
 
-(function() {
+setTimeout(function() {
     'use strict';
 
     // https://css-tricks.com/snippets/javascript/lighten-darken-color/
@@ -39,6 +39,7 @@
     const qsa = (a, b) => toArray(typeof b == 'undefined' ? document.querySelectorAll(a) : a.querySelectorAll(b));
 
     // colour names and hex codes from google calendar.
+    // colours should be in hex.
     const colours = {
         'Tomato': '#D50000',
         'Flamingo': '#E67C73',
@@ -130,8 +131,16 @@
     margin-left: -2px;
 }
 `;
-    Object.entries(courseColours).forEach(([course, colour]) => { css += `.${course}:not(.timetable-activity-candidate) { background-color: ${C[colour]} }` });
+    Object.entries(courseColours).forEach(([course, colour]) => {
+        css += `
+.${course}:not(.timetable-activity-candidate) {
+    background-color: ${C[colour]}
+}
+
+
+
+`});
     const style = document.createElement('style');
     style.appendChild(document.createTextNode(css));
     document.head.appendChild(style);
-})();
+}, 0);

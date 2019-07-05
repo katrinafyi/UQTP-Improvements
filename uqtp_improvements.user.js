@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         UQTP Improvements
 // @namespace    kentonlam.xyz
-// @version      0.1
+// @version      0.2
 // @description  Colours courses on UQ timetable planner.
 // @author       Kenton Lam
 // @match        https://timetableplanner.app.uq.edu.au/semesters/*
@@ -32,10 +32,14 @@
     // mapping of course code to colours. colour names are lowercased.
     // also supports course prefixes (e.g. MATH, CSSE)
     const courseColours = {
-        MATH3204: 'peacock',
-        CSSE2310: 'tangerine',
-        STAT2004: 'basil',
-        COMP3506: 'grape'
+        MATH: 'peacock',
+        CSSE: 'tangerine',
+        STAT: 'basil',
+        COMP: 'grape',
+        ENGG: 'banana',
+        DECO: 'blueberry',
+        INFS: 'flamingo',
+        ELEC: 'sage'
     };
 
     // icons for class types (lecture, practical, etc.)

@@ -1,17 +1,38 @@
 // ==UserScript==
 // @name         UQTP Improvements
 // @namespace    kentonlam.xyz
-// @version      0.3.1
+// @version      0.3.2
 // @description  Colours courses on UQ timetable planner.
 // @author       Kenton Lam
 // @match        https://timetableplanner.app.uq.edu.au/semesters/*
 // @grant        none
+// @run-at       document-end
 // ==/UserScript==
 
 /* globals $ */
 
 (function() {
     'use strict';
+
+    // https://css-tricks.com/snippets/javascript/lighten-darken-color/
+    function LightenDarkenColor(col, amt) {
+        var usePound = false;
+        if (col[0] == "#") {
+            col = col.slice(1);
+            usePound = true;
+        }
+        var num = parseInt(col,16);
+        var r = (num >> 16) + amt;
+        if (r > 255) r = 255;
+        else if  (r < 0) r = 0;
+        var b = ((num >> 8) & 0x00FF) + amt;
+        if (b > 255) b = 255;
+        else if  (b < 0) b = 0;
+        var g = (num & 0x0000FF) + amt;
+        if (g > 255) g = 255;
+        else if (g < 0) g = 0;
+        return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16);
+    }
 
     const toArray = (x) => Array.prototype.slice.call(x, 0);
     const qs = (a, b) => typeof b == 'undefined' ? document.querySelector(a) : a.querySelector(b);
@@ -89,6 +110,7 @@
     colourTimetable();
 
     const timetable = qs('.timetable');
+    console.assert(timetable, ".timetable element not found.");
     const config = { attributes: false, childList: true, subtree: true };
     const observer = new MutationObserver(colourTimetable);
     // watch for changes by Ember and update colours.

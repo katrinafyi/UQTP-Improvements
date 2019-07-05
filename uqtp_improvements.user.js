@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         UQTP Improvements
 // @namespace    kentonlam.xyz
-// @version      0.2
+// @version      0.2.1
 // @description  Colours courses on UQ timetable planner.
 // @author       Kenton Lam
 // @match        https://timetableplanner.app.uq.edu.au/semesters/*
@@ -58,7 +58,10 @@
     const courseCodeRegex = /^[A-Z]+/;
     const colourTimetable = (mutations) => {
         // add course code to class list for courses on the left sidebar.
-        $('.course-item > .info > .heading:first-child').each((i, el) => el.classList.add(el.textContent));
+        $('.course-item > .info > .heading:first-child').each((i, el) => {
+            el.classList.add(el.textContent);
+            el.classList.add(courseCodeRegex.exec(el.textContent)[0]);
+        });
         // for each timetabled event
         $('.timetable-activity').each((i, el) => {
             // add course code to class list.

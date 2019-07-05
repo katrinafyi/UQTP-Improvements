@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         UQTP Improvements
 // @namespace    kentonlam.xyz
-// @version      0.3.3
+// @version      0.4
 // @description  Colours courses on UQ timetable planner.
 // @author       Kenton Lam
 // @match        https://timetableplanner.app.uq.edu.au/semesters/*
@@ -31,7 +31,7 @@ setTimeout(function() {
         var g = (num & 0x0000FF) + amt;
         if (g > 255) g = 255;
         else if (g < 0) g = 0;
-        return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16);
+        return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
     }
 
     const toArray = (x) => Array.prototype.slice.call(x, 0);
@@ -58,6 +58,7 @@ setTimeout(function() {
     // mapping of course code to colours. colour names are lowercased.
     // also supports course prefixes (e.g. MATH, CSSE)
     const courseColours = {
+        'timetable-activity': 'calendar color', // default colour.
         MATH: 'peacock',
         CSSE: 'tangerine',
         STAT: 'basil',
@@ -81,13 +82,13 @@ setTimeout(function() {
     const C = {}
     Object.entries(colours).forEach(([name, hex]) => { C[name.toLowerCase()] = hex; });
 
+    // mapping of singleStream[course][activity] to true/false
+    // indicating if that activity has a single stream.
+    const singleStream = {};
+
     const courseCodeRegex = /^[A-Z]+/;
     const colourTimetable = (mutations) => {
-        // add course code to class list for courses on the left sidebar.
-        qsa('.course-item > .info > .heading:first-child').forEach((el) => {
-            el.classList.add(el.textContent);
-            el.classList.add(courseCodeRegex.exec(el.textContent)[0]);
-        });
+        colourCoursesSidebar();
         // for each timetabled event
         qsa('.timetable-activity').forEach((el) => {
             // add course code to class list.
@@ -100,23 +101,49 @@ setTimeout(function() {
                 el.title = el.textContent; // show full text on hover
 
                 // add icon corresponding to first letter of activity stream.
-                const icon = activityIcons[el.querySelector('.activity-stream').textContent[0]];
+                const stream = el.querySelector('.activity-stream').textContent;
+                if (singleStream[courseCode][stream])
+                    el.classList.add('single-stream');
+                const icon = activityIcons[stream[0]];
                 if (icon)
                     el.insertAdjacentHTML('afterbegin', `<span class="activity-icon">${icon}</span> `);
             }
         });
-
     };
 
-    colourTimetable();
+    const colourCoursesSidebar = () => {
+        // add course code to class list for courses on the left sidebar.
+        qsa('.course-item').forEach(courseEl => {
+            const codeEl = qs(courseEl, '.info > .heading:first-child');
+            const code = codeEl.textContent;
+            codeEl.classList.add(code);
+            codeEl.classList.add(courseCodeRegex.exec(code)[0]);
 
+            qsa(courseEl, '.stream-selector').forEach(streamEl => {
+                const stream = streamEl.textContent.split('\u2013')[1].trim(); // en dash
+                if (!singleStream[code]) singleStream[code] = {};
+                singleStream[code][stream] = qsa(streamEl.nextElementSibling, '.stream-name').length <= 1;
+            });
+        });
+    };
+
+    
     const timetable = qs('.timetable');
     console.assert(timetable, ".timetable element not found.");
+
+    colourCoursesSidebar();
+    colourTimetable();
+
     const config = { attributes: false, childList: true, subtree: true };
     const observer = new MutationObserver(colourTimetable);
     // watch for changes by Ember and update colours.
     observer.observe(timetable, config);
-    
+
+    /*
+    const sidebarObserver = new MutationObserver(colourCoursesSidebar);
+    sidebarObserver.observe(qs('.course-group'), { attributes: false, childList: true, subtree: false });
+    */
+
     // generate css for courses
     let css = `
 .course-item > .info > .heading:first-child {
@@ -131,14 +158,24 @@ setTimeout(function() {
     margin-left: -2px;
 }
 `;
-    Object.entries(courseColours).forEach(([course, colour]) => {
+    Object.entries(courseColours).forEach(([course, colourName]) => {
+        const colour = C[colourName];
+        const darker = LightenDarkenColor(colour, -30);
+        const w = 20;
         css += `
 .${course}:not(.timetable-activity-candidate) {
-    background-color: ${C[colour]}
+    background-color: ${colour}
 }
 
-
-
+.${course}.single-stream:not(.timetable-activity-candidate) {
+    background: repeating-linear-gradient(
+        45deg,
+        ${darker},
+        ${darker} ${w}px,
+        ${colour} ${w}px,
+        ${colour} ${2*w}px
+    );
+}
 `});
     const style = document.createElement('style');
     style.appendChild(document.createTextNode(css));

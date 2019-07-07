@@ -1,8 +1,9 @@
-# UQTP-Improvements
+# UQTP Improvements
 Userscript to colour courses on UQ timetable planner.
 
 ### How to use
-Install Tampermonkey or similar for your browser. Click here: https://github.com/KentonLam/UQTP-Improvements/raw/master/uqtp_improvements.user.js
+1. Install [Tampermonkey](https://www.tampermonkey.net/) (recommended and supports Chrome, Edge, Safari, Opera Next and Firefox) or similar.
+2. Install the script by clicking here: [uqtp_improvements.user.js](https://github.com/KentonLam/UQTP-Improvements/raw/master/uqtp_improvements.user.js).
 
 If you want to set your own colours, change this section. Colour names are from Google calendar.
 ```javascript

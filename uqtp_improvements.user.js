@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         UQTP Improvements
 // @namespace    kentonlam.xyz
-// @version      0.4
+// @version      0.5
 // @description  Colours courses on UQ timetable planner.
 // @author       Kenton Lam
 // @match        https://timetableplanner.app.uq.edu.au/semesters/*
@@ -11,10 +11,11 @@
 
 /* globals $ */
 
-setTimeout(function() {
+setTimeout(function UQTPUserscript() {
     'use strict';
 
     // https://css-tricks.com/snippets/javascript/lighten-darken-color/
+    // negative amt darkens.
     function LightenDarkenColor(col, amt) {
         var usePound = false;
         if (col[0] == "#") {
@@ -34,6 +35,7 @@ setTimeout(function() {
         return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16).padStart(6, '0');
     }
 
+    // query selector shortcuts
     const toArray = (x) => Array.prototype.slice.call(x, 0);
     const qs = (a, b) => typeof b == 'undefined' ? document.querySelector(a) : a.querySelector(b);
     const qsa = (a, b) => toArray(typeof b == 'undefined' ? document.querySelectorAll(a) : a.querySelectorAll(b));
@@ -41,24 +43,26 @@ setTimeout(function() {
     // colour names and hex codes from google calendar.
     // colours should be in hex.
     const colours = {
-        'Tomato': '#D50000',
-        'Flamingo': '#E67C73',
-        'Tangerine': '#F4511E',
-        'Banana': '#F6BF26',
-        'Sage': '#33B679',
-        'Basil': '#0B8043',
-        'Peacock': '#039BE5',
-        'Blueberry': '#3F51B5',
-        'Lavender': '#7986CB',
-        'Grape': '#8E24AA',
-        'Graphite': '#616161',
-        'Calendar color': '#4285F4'
+        'tomato': '#D50000',
+        'flamingo': '#E67C73',
+        'tangerine': '#F4511E',
+        'banana': '#F6BF26',
+        'sage': '#33B679',
+        'basil': '#0B8043',
+        'peacock': '#039BE5',
+        'blueberry': '#3F51B5',
+        'lavender': '#7986CB',
+        'grape': '#8E24AA',
+        'graphite': '#616161',
+        'calendar color': '#4285F4'
     };
+    const C = colours;
 
-    // mapping of course code to colours. colour names are lowercased.
+    // mapping of course code to colour names above.
+    // can also use hex codes but NOT CSS colour names.
     // also supports course prefixes (e.g. MATH, CSSE)
     const courseColours = {
-        'timetable-activity': 'calendar color', // default colour.
+        DEFAULT: 'calendar color', // default colour.
         MATH: 'peacock',
         CSSE: 'tangerine',
         STAT: 'basil',
@@ -78,25 +82,29 @@ setTimeout(function() {
         'T': '💡'
     };
 
-
-    const C = {}
-    Object.entries(colours).forEach(([name, hex]) => { C[name.toLowerCase()] = hex; });
-
     // mapping of singleStream[course][activity] to true/false
     // indicating if that activity has a single stream.
     const singleStream = {};
 
     const courseCodeRegex = /^[A-Z]+/;
+    const toClassName = c => 'highlight-'+c;
+    const colourCourseElement = (el, code) => {
+        el.classList.add(toClassName('DEFAULT'));
+        el.classList.add(toClassName(code));
+        el.classList.add(toClassName(courseCodeRegex.exec(code)[0]));
+    }
     const colourTimetable = (mutations) => {
+        // we need this to compute singleStream before colouring the timetable.
         colourCoursesSidebar();
+
         // for each timetabled event
         qsa('.timetable-activity').forEach((el) => {
             // add course code to class list.
             const courseCode = el.querySelector('.course-name').textContent;
-            el.classList.add(courseCode);
-            el.classList.add(courseCodeRegex.exec(courseCode)[0]);
+            colourCourseElement(el, courseCode);
 
-            // if statement prevents recursion with observer.
+            // if statement prevents recursion with observer because we add an
+            // element here.
             if (!el.firstElementChild.classList.contains('activity-icon')) {
                 el.title = el.textContent; // show full text on hover
 
@@ -116,22 +124,24 @@ setTimeout(function() {
         qsa('.course-item').forEach(courseEl => {
             const codeEl = qs(courseEl, '.info > .heading:first-child');
             const code = codeEl.textContent;
-            codeEl.classList.add(code);
-            codeEl.classList.add(courseCodeRegex.exec(code)[0]);
+            colourCourseElement(codeEl, code);
 
+            // for each activity
             qsa(courseEl, '.stream-selector').forEach(streamEl => {
+                // currently selected stream.
                 const stream = streamEl.textContent.split('\u2013')[1].trim(); // en dash
                 if (!singleStream[code]) singleStream[code] = {};
+                // singleStream is set to false if > 1 possible option.
                 singleStream[code][stream] = qsa(streamEl.nextElementSibling, '.stream-name').length <= 1;
             });
         });
     };
 
-    
+
     const timetable = qs('.timetable');
     console.assert(timetable, ".timetable element not found.");
 
-    colourCoursesSidebar();
+    colourCoursesSidebar(); // initial colouring.
     colourTimetable();
 
     const config = { attributes: false, childList: true, subtree: true };
@@ -159,15 +169,17 @@ setTimeout(function() {
 }
 `;
     Object.entries(courseColours).forEach(([course, colourName]) => {
-        const colour = C[colourName];
+        const courseClass = toClassName(course);
+        const colour = colourName[0] == '#' ? colourName : C[colourName];
+        console.assert(colour, "colour "+colourName+" not recognised.");
         const darker = LightenDarkenColor(colour, -30);
         const w = 20;
         css += `
-.${course}:not(.timetable-activity-candidate) {
+.${courseClass}:not(.timetable-activity-candidate) {
     background-color: ${colour}
 }
 
-.${course}.single-stream:not(.timetable-activity-candidate) {
+.${courseClass}.single-stream:not(.timetable-activity-candidate) {
     background: repeating-linear-gradient(
         45deg,
         ${darker},
